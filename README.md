@@ -57,6 +57,12 @@ Override the default configured theme by adding a theme option (auto, light or d
 {widget name='pixel_cloudflare_turnstile' theme='dark'}
 ```
 
+Override the widget appearance (always, execute or interaction-only):
+
+```html
+{widget name='pixel_cloudflare_turnstile' appearance='interaction-only'}
+```
+
 Override the default action name by adding an action option:
 
 ```html
@@ -121,3 +127,7 @@ Use the following sitekeys and secret keys for testing purposes:
 | 1x0000000000000000000000000000000AA | Always passes                        |
 | 2x0000000000000000000000000000000AA | Always fails                         |
 | 3x0000000000000000000000000000000AA | Yields a "token already spent" error |
+### Loading
+
+The Cloudflare script is not loaded with the page. A small loader (`views/js/turnstile-loader.js`) downloads it and renders the widgets of a form only when the visitor focuses, clicks or touches that form. If the form is submitted before Turnstile returns a token, the submit waits for it and is then sent again with the same button.
+
