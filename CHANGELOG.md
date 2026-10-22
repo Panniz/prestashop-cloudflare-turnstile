@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.0
+
+- Load the Cloudflare script only when the visitor starts using a protected form (focus, click or touch), instead of on every page. A submit sent before the token is ready waits for it and is then sent again.
+- Newsletter widget uses `appearance: interaction-only`, so it stays invisible unless Cloudflare asks the visitor to click.
+- Widget option `appearance` (`always`, `execute`, `interaction-only`).
+
 ## 1.1.4
 
 - Add newsletter registration form ([@jf-viguier](https://github.com/jf-viguier))

@@ -37,7 +37,7 @@ class Pixel_cloudflare_turnstile extends Module implements WidgetInterface
     public function __construct()
     {
         $this->name = 'pixel_cloudflare_turnstile';
-        $this->version = '1.1.4';
+        $this->version = '1.2.0';
         $this->author = 'Pixel Open';
         $this->tab = 'front_office_features';
         $this->need_instance = 0;
@@ -109,10 +109,16 @@ class Pixel_cloudflare_turnstile extends Module implements WidgetInterface
     /**
      * Adds CSS and JS
      *
+     * The Cloudflare script is not added here: views/js/turnstile-loader.js
+     * downloads it only when the visitor starts using a protected form.
+     *
      * @return void
      */
     public function hookActionFrontControllerSetMedia(): void
     {
+        if (!$this->getSitekey()) {
+            return;
+        }
         $this->context->controller->registerStylesheet(
             'cloudflare-turnstile',
             'modules/' . $this->name . '/views/css/turnstile.css',
@@ -123,12 +129,11 @@ class Pixel_cloudflare_turnstile extends Module implements WidgetInterface
         );
         $this->context->controller->registerJavascript(
             'cloudflare-turnstile',
-            'https://challenges.cloudflare.com/turnstile/v0/api.js',
+            'modules/' . $this->name . '/views/js/turnstile-loader.js',
             [
-                'server'     => 'remote',
-                'position'   => 'head',
+                'position'   => 'bottom',
                 'priority'   => 100,
-                'attributes' => 'async',
+                'attributes' => 'defer',
             ]
         );
     }
@@ -207,7 +212,9 @@ class Pixel_cloudflare_turnstile extends Module implements WidgetInterface
             return '';
         }
 
-        return $this->renderWidget('displayNewsletterRegistration', []);
+        // The newsletter form sits in the footer of every page: keep the
+        // widget invisible unless Cloudflare needs the visitor to click it.
+        return $this->renderWidget('displayNewsletterRegistration', ['appearance' => 'interaction-only']);
     }
 
     /**
@@ -444,7 +451,7 @@ class Pixel_cloudflare_turnstile extends Module implements WidgetInterface
         if (!$isCustom && (!$this->canProcess($className) && $hookName != 'displayNewsletterRegistration')) {
             return '';
         }
-        $keys = [$this->name, $className, $this->getFormName()];
+        $keys = [$this->name, $className, $this->getFormName(), $hookName, $configuration['appearance'] ?? 'always'];
         $cacheId = join('_', $keys);
         if (!$this->isCached($this->templateFile, $this->getCacheId($cacheId))) {
             $this->smarty->assign($this->getWidgetVariables($hookName, $configuration));
@@ -468,6 +475,9 @@ class Pixel_cloudflare_turnstile extends Module implements WidgetInterface
             'sitekey' => $this->getSitekey(),
             'theme'   => $configuration['theme'] ?? $this->getTheme(),
             'action'  => substr($action, 0, 32), // This can only contain up to 32 alphanumeric characters including _ and -
+            'appearance' => in_array($configuration['appearance'] ?? '', ['always', 'execute', 'interaction-only'], true)
+                ? $configuration['appearance']
+                : 'always',
         ];
     }
 
